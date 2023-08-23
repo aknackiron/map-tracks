@@ -20,7 +20,7 @@ class TestGPXFileHandling:
 
     def test_track_name_from_filename(self):
         fh = GPXFileHandling()
-        files = fh.get_file_listing('./data/', 'gpx', 'SportsTracker')
+        files = fh.get_file_listing('./data/', 'gpx', file_name_starts_with='SportsTracker')
         assert (len(files) == 1)
         track_name = fh.track_name_from_filename(files[0])
         assert (track_name == '602ab25caee48f193dbea82a')

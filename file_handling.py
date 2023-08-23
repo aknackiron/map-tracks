@@ -38,7 +38,7 @@ class GPXFileHandling:
         :return: activity type name
         """
         try:
-            activity = filename.split('-')[1]
+            activity = filename.split('/')[-1].split('-')[1]
             print("Activity from filename:", activity)
         except IndexError as e:
             activity = "NA"
