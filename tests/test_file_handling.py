@@ -13,14 +13,29 @@ class TestGPXFileHandling:
     def test_get_file_activity(self):
         # should be only one match
         fh = GPXFileHandling()
-        files = fh.get_file_listing('./data/', 'gpx', 'SportsTracker')
-        assert (len(files) == 1)
-        activity = fh.activity_from_filename(files[0])
-        assert (activity == 'AlpineSkiing')
+        filename = '/Users/xxx/Projects/yyy/tests/data/SportsTracker-AlpineSkiing-20210215-602ab25caee48f193dbea82a.gpx'
+        expected = 'AlpineSkiing'
+        activity = fh.activity_from_filename(filename)
+        assert (activity == expected)
+        filename = 'SportsTracker-AlpineSkiing-20210215-602ab25caee48f193dbea82a.gpx'
+        activity = fh.activity_from_filename(filename)
+        assert (activity == expected)
+        filename = './data/SportsTracker-AlpineSkiing-20210215-602ab25caee48f193dbea82a.gpx'
+        activity = fh.activity_from_filename(filename)
+        assert (activity == expected)
 
     def test_track_name_from_filename(self):
+        filename = '/Users/xxx/Projects/yyy/tests/data/SportsTracker-AlpineSkiing-20210215-602ab25caee48f193dbea82a.gpx'
+        expected = '602ab25caee48f193dbea82a'
         fh = GPXFileHandling()
-        files = fh.get_file_listing('./data/', 'gpx', file_name_starts_with='SportsTracker')
-        assert (len(files) == 1)
-        track_name = fh.track_name_from_filename(files[0])
-        assert (track_name == '602ab25caee48f193dbea82a')
+        track_name = fh.track_name_from_filename(filename)
+        assert (track_name == expected)
+        filename = 'SportsTracker-AlpineSkiing-20210215-602ab25caee48f193dbea82a.gpx'
+        track_name = fh.track_name_from_filename(filename)
+        assert (track_name == expected)
+        filename = './data/SportsTracker-AlpineSkiing-20210215-602ab25caee48f193dbea82a.gpx'
+        track_name = fh.track_name_from_filename(filename)
+        assert (track_name == expected)
+        filename = '/Users/user/Projects/some-path/tests/data/SportsTracker-AlpineSkiing-20210215-602ab25caee48f193dbea82a.gpx'
+        track_name = fh.track_name_from_filename(filename)
+        assert (track_name == expected)

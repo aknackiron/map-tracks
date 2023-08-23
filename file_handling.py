@@ -39,7 +39,7 @@ class GPXFileHandling:
         """
         try:
             activity = filename.split('/')[-1].split('-')[1]
-            print("Activity from filename:", activity)
+            # print("Activity from filename:", activity)
         except IndexError as e:
             activity = "NA"
             print("Unexpected filename format, file format should be SportsTracker-[activity]-....gpx\n\n{}".format(e))
@@ -51,7 +51,8 @@ class GPXFileHandling:
         :param filename: the SportsTracker exported track name
         :return: track name
         """
-        return filename.split('-')[3].split('.')[0]
+        # print("filename '{}' has track name '{}'".format(filename, filename.split('-')[3].split('.')[0]))
+        return filename.split('/')[-1].split('.')[0].split('-')[3]
 
     def open_gpx(self, filename: str) -> GPX:
         """
