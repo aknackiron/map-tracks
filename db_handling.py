@@ -5,17 +5,22 @@ from file_handling import GPXFileHandling
 
 
 class DBHandling:
+    def __init__(self):
+        self.connection = None
+        self.db_name = ""
 
-    def create_db(self, db_name: str = 'gps_data.db'):
-        return sqlite3.connect(db_name)
+    def connect_to_db(self, db_name: str = 'gps_data.db'):
+        self.db_name = db_name
+        self.connection = sqlite3.connect(self.db_name)
+        return self.connection
 
 
-    def close_connection(self, connection: sqlite3.Connection):
-        return connection.close()
+    def close_connection(self):
+        return self.connection.close()
 
 
-    def create_gpx_db_table(self, connection: sqlite3.Connection):
-        c = connection.cursor()
+    def create_gpx_table(self):
+        c = self.connection.cursor()
         # Create a table to store GPX data
         try:
             c.execute('''
@@ -29,7 +34,7 @@ class DBHandling:
                     activity_type TEXT
                 )
             ''')
-            connection.commit()
+            self.connection.commit()
             return True
         except sqlite3.OperationalError as e:
             print("table already exists")
@@ -37,7 +42,7 @@ class DBHandling:
             return False
 
 
-    def insert_track_to_db(self, connection: sqlite3.Connection, track_name, activity, points):
+    def insert_track_to(self, connection: sqlite3.Connection, track_name, activity, points):
         c = connection.cursor()
         for point in points:
             c.execute('''
@@ -47,16 +52,17 @@ class DBHandling:
         connection.commit()
 
 
-    def gpx_points_to_db(self, filename: str, connection: sqlite3.Connection):
+    def store_gpx_points(self, filename: str):
         """
         Read GPX file for content and insert values to database
         :param filename: the filename
         :return: was storing successful or not
         """
         fh = GPXFileHandling()
-        print(os.path.curdir)
+        # print("current path:", os.path.curdir, "filename:", filename)
         track_name = fh.track_name_from_filename(filename)
         activity = fh.activity_from_filename(filename)
+        # print("storing to DB track name '{}' and activity '{}'".format(track_name, activity))
         # Parse GPX file and insert data
         with open(filename, 'r') as gpx_file:
             gpx = gpxpy.parse(gpx_file)
@@ -64,5 +70,18 @@ class DBHandling:
                 points = []
                 for segment in track.segments:
                     points.extend(segment.points)
-                self.insert_track_to_db(connection, track_name, activity, points)
+                self.insert_track_to(self.connection, track_name, activity, points)
 
+    def get_all_track_names(self) -> [str]:
+        """
+        Returns all track names from the DB
+        """
+        sql_query = "SELECT DISTINCT track_name FROM gpx_data"
+        cursor = self.connection.cursor()
+        cursor.execute(sql_query)
+        results = cursor.fetchall()
+        track_names = []
+        for r in results:
+            track_names.append(r[0])
+        print("track names in DB:", track_names)
+        return track_names
