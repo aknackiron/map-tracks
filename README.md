@@ -29,6 +29,7 @@ the recorded GPX tracks.
 * get max and min temperatures for segments over a period of time for the locations in the segments (maybe only start 
  and stop location is enough)
 * get max and min altitudes for segments over a period of time
+* hash track names before storing them to db to mask the actual track names
 
 ### Done Features ###
 

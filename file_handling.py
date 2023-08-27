@@ -56,10 +56,31 @@ class GPXFileHandling:
 
     def open_gpx(self, filename: str) -> GPX:
         """
-        Open the GPX file and return the gpx object read from the file
+        Open the .gpx file and return the GPX object read from file
         :param filename: the file to be read
         :return: GPX object
         """
         with open(filename, 'r') as gpx_file:
             gpx = gpxpy.parse(gpx_file)
         return gpx
+
+    def store_track_files_to_db(self, path_to_track_files, db) -> None:
+        path_to_tracks = path_to_track_files
+
+        # get all tracks files
+        track_files = self.get_file_listing(path_to_tracks, 'gpx', 'SportsTracker')
+        db_tracks = db.get_all_track_names()
+        counter = 0
+        # get file track name, check if track name is already in DB
+        for f in track_files:
+            track_name = self.track_name_from_filename('./tracks/' + f)
+            if track_name in db_tracks:
+                # already exists, do nothing
+                print("track '{}' already in DB".format(track_name))
+                pass
+            else:
+                print("storing to DB track {}".format(track_name))
+                db.store_gpx_points('./tracks/' + f)
+                counter = counter + 1
+        print("stored {} new tracks to DB".format(counter))
+        return
