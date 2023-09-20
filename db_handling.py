@@ -5,9 +5,9 @@ from file_handling import GPXFileHandling
 
 
 class DBHandling:
-    def __init__(self):
+    def __init__(self, db_filename):
         self.connection = None
-        self.db_name = ""
+        self.db_name = db_filename
 
     def connect_to_db(self, db_name: str = 'gps_data.db'):
         self.db_name = db_name
@@ -101,7 +101,12 @@ class DBHandling:
             cursor = self.connection.cursor()
             cursor.execute(sql_query)
             result = cursor.fetchall()
-            return result
+            # clean the results
+            tracks = []
+            for res in result:
+                tracks.append(res[0])
+            print(tracks)
+            return tracks
         except sqlite3.Error as e:
             print(e)
             print("Connection error - could not retrieve requested tracks: {}".format(sql_query))
@@ -111,8 +116,8 @@ class DBHandling:
         sql_query = '''SELECT latitude, longitude FROM gpx_data 
                         WHERE track_name = '{}' 
                         ORDER BY date(time) ;
-        '''.format(track[0])
-        print("sql query for points: {}".format(sql_query))
+        '''.format(track)
+        # print("sql query for points: {}".format(sql_query))
         try:
             cursor = self.connection.cursor()
             cursor.execute(sql_query)
@@ -123,3 +128,17 @@ class DBHandling:
             print("Connection error - could not retrieve requested points: {}".format(sql_query))
 
         return []
+
+    def get_track_start_date(self, track_name) -> str:
+        sql_query = '''SELECT time from gpx_data WHERE track_name = '{}' 
+                        ORDER BY date(time) LIMIT 1;'''.format(track_name)
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(sql_query)
+            result = cursor.fetchall()
+            return result
+        except sqlite3.Error as e:
+            print(e)
+            print("Connection error - could not retrieve requested track's start date: {}".format(sql_query))
+
+        return ""
