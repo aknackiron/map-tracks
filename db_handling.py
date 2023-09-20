@@ -1,4 +1,3 @@
-import os.path
 import sqlite3
 import gpxpy
 from file_handling import GPXFileHandling
@@ -46,14 +45,19 @@ class DBHandling:
         return True
 
 
-    def insert_track_to(self, track_name, activity, points):
-        # does the table exist?
+    def insert_track_to(self, track_name, activity, points, date=""):
         c = self.connection.cursor()
-        for point in points:
+        if not points:
             c.execute('''
                 INSERT INTO gpx_data (track_name, latitude, longitude, elevation, time, activity_type)
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''', (track_name, point.latitude, point.longitude, point.elevation, point.time, activity))
+            ''', (track_name, "", "", "", date, activity))
+        else:
+            for point in points:
+                c.execute('''
+                    INSERT INTO gpx_data (track_name, latitude, longitude, elevation, time, activity_type)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (track_name, point.latitude, point.longitude, point.elevation, point.time, activity))
         self.connection.commit()
 
 
@@ -64,18 +68,23 @@ class DBHandling:
         :return: was storing successful or not
         """
         fh = GPXFileHandling()
-        # print("current path:", os.path.curdir, "filename:", filename)
         track_name = fh.track_name_from_filename(filename)
+        track_date = fh.date_from_filename(filename)
         activity = fh.activity_from_filename(filename)
         # print("storing to DB track name '{}' and activity '{}'".format(track_name, activity))
         # Parse GPX file and insert data
         with open(filename, 'r') as gpx_file:
             gpx = gpxpy.parse(gpx_file)
-            for track in gpx.tracks:
-                points = []
-                for segment in track.segments:
-                    points.extend(segment.points)
-                self.insert_track_to(track_name, activity, points)
+            if not gpx.tracks:
+                self.insert_track_to(track_name, activity, [], track_date)
+            else:
+                for track in gpx.tracks:
+                    points = []
+                    for segment in track.segments:
+                        points.extend(segment.points)
+                    self.insert_track_to(track_name, activity, points)
+            print("store_gpx_points: {}: {}".format(track_name, gpx.tracks))
+        return None
 
     def get_all_track_names(self) -> [str]:
         """
@@ -88,7 +97,7 @@ class DBHandling:
         track_names = []
         for r in results:
             track_names.append(r[0])
-        print("track names in DB:", track_names)
+        print("tracks already in DB: {}", len(track_names))
         return track_names
 
     def get_activity_tracks(self, start: str, end: str, activity: str) -> [str]:
@@ -140,5 +149,4 @@ class DBHandling:
         except sqlite3.Error as e:
             print(e)
             print("Connection error - could not retrieve requested track's start date: {}".format(sql_query))
-
         return ""

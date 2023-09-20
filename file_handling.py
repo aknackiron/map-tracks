@@ -1,5 +1,6 @@
 import os
 import gpxpy
+import datetime
 from gpxpy.gpx import GPX
 
 """
@@ -45,6 +46,20 @@ class GPXFileHandling:
             print("Unexpected filename format, file format should be SportsTracker-[activity]-....gpx\n\n{}".format(e))
         return activity
 
+    def date_from_filename(self, filename: str) -> str:
+        """
+        Assuming correct file name is provided, return the activity date stored in the file name in DB assumed syntax
+        :param filename: the filename to parse
+        :return: date in format %Y-%M-%d
+        """
+        try:
+            track_date = datetime.datetime.strptime(filename.split('/')[-1].split('-')[2], '%Y%m%d').strftime('%Y-%m-%d')
+        except IndexError as e:
+            track_date = "NA"
+            print("Unexpected filename format, file format should be SportsTracker-<activity>-<date>-<track name>.gpx\n\n{}".format(e))
+        return track_date
+
+
     def track_name_from_filename(self, filename: str) -> str:
         """
         Returns the track identifier from the filename
@@ -70,17 +85,19 @@ class GPXFileHandling:
         # get all tracks files
         track_files = self.get_file_listing(path_to_tracks, 'gpx', 'SportsTracker')
         db_tracks = db.get_all_track_names()
-        counter = 0
+        new_tracks = []
+        existing_tracks = []
         # get file track name, check if track name is already in DB
         for f in track_files:
-            track_name = self.track_name_from_filename('./tracks/' + f)
+            track_name = self.track_name_from_filename(path_to_tracks + f)
             if track_name in db_tracks:
                 # already exists, do nothing
-                print("track '{}' already in DB".format(track_name))
+                existing_tracks.append(track_name)
                 pass
             else:
-                print("storing to DB track {}".format(track_name))
-                db.store_gpx_points('./tracks/' + f)
-                counter = counter + 1
-        print("stored {} new tracks to DB".format(counter))
+                db.store_gpx_points(path_to_tracks + f)
+                new_tracks.append(track_name)
+        # print("tracks already in DB: \n'{}'".format(existing_tracks))
+        # print("new tracks to DB: \n{}".format(new_tracks))
+        print("stored {} new tracks to DB with {} already found in DB".format(len(new_tracks), len(existing_tracks)))
         return
