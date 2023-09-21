@@ -33,7 +33,7 @@ other service) may be more work.
 
 There is a basic help available.
 
-```
+```python
 ✗ python track-map.py --help
 usage: track-map.py [-h] {create_db,create_map} ...
 
@@ -47,16 +47,17 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  ```
+```
 
 To create the local DB from the downloaded gpx files, use the `create_db` command.
-```
+
+```python
 ✗ python track-map.py create_db --path_to_files tracks/ --db_file out.db 
 ```
 
 To create a web page of your activity, run the script with `create_map`.
 
-```
+```python
 ✗ python track-map.py create_map --db_file out.db --start_date 2023-06-06 --end_date 2023-06-07 --html_output route.html --activity Cycling --gpx_file ~/Downloads/2023-09-21_1318006646_my_gpx.gpx 
 ```
 
