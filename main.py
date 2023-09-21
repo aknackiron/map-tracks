@@ -1,6 +1,7 @@
 import sys
 import matplotlib.pyplot as plt
 import folium
+import argparse
 import pandas as pd
 
 from gpxpy.gpx import GPX
@@ -78,7 +79,7 @@ def save_map_to_file(track_map: folium.map, filename: str = 'track_map.html'):
 def lists_to_tuple_list(lat: [float], lon: [float]) -> ([float], [float]):
     tuple_list: list[tuple[float, float]] = []
     if len(lat) != len(lon):
-        print("Lon and lat of different sizes")
+        print("Longitude and latitude lists are of different sizes")
         sys.exit(0)
     for i in range(len(lat)):
         tuple_list.append((lat[i], lon[i]))
@@ -86,7 +87,7 @@ def lists_to_tuple_list(lat: [float], lon: [float]) -> ([float], [float]):
 
 
 # Press the green button in the gutter to run the script.
-def fit_bounds(tracks_and_points, track_map):
+def fit_map(tracks_and_points, track_map):
     data = {'Lat': [], 'Long': []}
     for values in tracks_and_points.values():
         for value in values:
@@ -102,43 +103,79 @@ def fit_bounds(tracks_and_points, track_map):
 
 
 if __name__ == '__main__':
-    fh = GPXFileHandling()
+    # Create the main parser
+    parser = argparse.ArgumentParser(description='Tool to read SportsTracker exported GPX files and draws these on map')
 
-    # open and create db
-    new_db_filename = 'gps_data.db'
-    dbh = DBHandling(new_db_filename)
-    dbh.connect_to_db(new_db_filename)
-    dbh.create_gpx_table()
+    # Create subparsers for different commands
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
-    # create or update db file
-    # fh.store_track_files_to_db('/Users/niko/Projects/sport-tracks/tracks/', dbh)
+    # Define a command 'create-db' with its own set of arguments: read gpx files and store these to the DB
+    parser_create_db = subparsers.add_parser('create-db', help='Create or update a tracks DB based on provided GPX files')
+    parser_create_db.add_argument('--path_to_files', type=str, help='Path from where GPX files are to be read')
+    parser_create_db.add_argument('--db_filename', type=str, help='Name of the existing or new DB file to update or create')
 
-    output_filename = 'track_map.html'
+    # Define a command 'command2' with its own set of arguments
+    parser_create_map = subparsers.add_parser('create-map', help='Create an HTML map from the tracks in the provided DB')
+    parser_create_map.add_argument('--db_filename', type=str, help='DB filename to read the track information')
+    # TODO single file name should be optional
+    parser_create_map.add_argument('--gpx_filename', type=str, help='A single GPX file to be included on a map')
+    parser_create_map.add_argument('--start_date', type=str, help='Start date (included) from which activities are added to map')
+    parser_create_map.add_argument('--end_date', type=str, help='End date (included) to which activities are added to map')
+    parser_create_map.add_argument('--html_output', type=str, help='Generated html file name')
+    # TODO providing activity should be optional?
+    parser_create_map.add_argument('--activity', type=str, help='Which activity is picked from the date range. If nothing '
+                                                                'provided, then first\'s track\'s activity is used')
+    # Parse the command-line arguments
+    args = parser.parse_args()
 
-    # draw planned track points to map
-    single_filename = 'tracks/Bike Ride Nice - Brussels.gpx'
-    gpx_points = fh.open_gpx(single_filename)
-    lat, lon = get_gpx_lat_lon(gpx_points)
-    latlon = lists_to_tuple_list(lat, lon)
-    # TODO, this activity needs to be passed as argument too
-    new_map = draw_track_line(latlon, "Planned route")
+    # Check which command was provided
+    if args.command == 'create-db':
+        print("Running create-db with params: {}".format(args))
+        db_name = args.db_filename
+        path_to_tracks = args.path_to_files
+        # open and create db
+        dbh = DBHandling(db_name)
+        dbh.create_gpx_table()
+        # create or update db file
+        fh = GPXFileHandling()
+        fh.store_track_files_to_db(path_to_tracks + "/", dbh)
 
-    # get actual traveled points and add to map
-    start_date = '2023-07-22'
-    end_date = '2023-08-07'
-    activity = 'Cycling'
+    elif args.command == 'create-map':
+        print("Running create-map with params: {}".format(args))
+        db_name = args.db_filename
+        single_file = args.gpx_filename
+        start_date = args.start_date
+        end_date = args.end_date
+        output_file = args.html_output
+        activity = args.activity
 
-    tracks = dbh.get_activity_tracks(start_date, end_date, activity)
-    # print("tracks for {} between {} - {}\n{}".format(activity, start_date, end_date, tracks))
-    tracks_points = {}
-    markers =
-    for track in tracks:
-        # print("Getting points for track: {}".format(track))
-        latlon = dbh.get_track_points(track)
-        track_start_date = dbh.get_track_start_date(track)
-        tracks_points.update({track: latlon})
-        new_map = add_line_to_map(latlon, new_map, tooltip_comment=activity)
-        new_map = add_info_marker_to_map(new_map, latlon[0][0], latlon[0][1], track_start_date)
+        # draw planned track points to map
+        new_map = folium.Map()
+        if single_file:
+            fh = GPXFileHandling()
+            gpx_points = fh.open_gpx(single_file)
+            lat, lon = get_gpx_lat_lon(gpx_points)
+            latlon = lists_to_tuple_list(lat, lon)
+            # TODO, this activity needs to be passed as argument too
+            new_map = draw_track_line(latlon, "Planned route")
 
-    new_map = fit_bounds(tracks_points, new_map)
-    save_map_to_file(new_map, output_filename)
+        dbh = DBHandling(db_name)
+        tracks = dbh.get_activity_tracks(start_date, end_date, activity)
+        # print("tracks for {} between {} - {}\n{}".format(activity, start_date, end_date, tracks))
+        tracks_points = {}
+        for track in tracks:
+            # print("Getting points for track: {}".format(track))
+            latlon = dbh.get_track_points(track)
+            track_start_date = dbh.get_track_start_date(track)
+            tracks_points.update({track: latlon})
+            new_map = add_line_to_map(latlon, new_map, tooltip_comment=activity)
+            new_map = add_info_marker_to_map(new_map, latlon[0][0], latlon[0][1], track_start_date)
+
+        new_map = fit_map(tracks_points, new_map)
+        save_map_to_file(new_map, output_file)
+
+    else:
+        # Handle when no command is provided or an invalid command is given
+        print('Invalid command or no command provided.')
+
+    sys.exit(0)

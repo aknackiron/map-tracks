@@ -7,6 +7,7 @@ class DBHandling:
     def __init__(self, db_filename):
         self.connection = None
         self.db_name = db_filename
+        self.connection = sqlite3.connect(self.db_name)
 
     def connect_to_db(self, db_name: str = 'gps_data.db'):
         self.db_name = db_name
@@ -102,19 +103,19 @@ class DBHandling:
 
     def get_activity_tracks(self, start: str, end: str, activity: str) -> [str]:
         sql_query = '''SELECT DISTINCT(track_name) FROM gpx_data 
-                        WHERE date(time) > date('{}') 
-                        AND date(time) < date('{}') 
+                        WHERE date(time) >= date('{}') 
+                        AND date(time) <= date('{}') 
                         AND activity_type = '{}' ORDER BY date(time);
         '''.format(start, end, activity)
         try:
             cursor = self.connection.cursor()
             cursor.execute(sql_query)
             result = cursor.fetchall()
+            print("DB returned these tracks: {}".format(result))
             # clean the results
             tracks = []
             for res in result:
                 tracks.append(res[0])
-            print(tracks)
             return tracks
         except sqlite3.Error as e:
             print(e)
