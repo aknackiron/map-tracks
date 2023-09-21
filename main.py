@@ -112,11 +112,11 @@ if __name__ == '__main__':
     # Define a command 'create-db' with its own set of arguments: read gpx files and store these to the DB
     parser_create_db = subparsers.add_parser('create_db', help='Create or update a tracks DB based on provided GPX files')
     parser_create_db.add_argument('--path_to_files', type=str, help='Path from where GPX files are to be read')
-    parser_create_db.add_argument('--db_filename', type=str, help='Name of the existing or new DB file to update or create')
+    parser_create_db.add_argument('--db_file', type=str, help='Name of the existing or new DB file to update or create')
 
     # Define a command 'command2' with its own set of arguments
     parser_create_map = subparsers.add_parser('create_map', help='Create an HTML map from the tracks in the provided DB')
-    parser_create_map.add_argument('--db_filename', type=str, help='DB filename to read the track information')
+    parser_create_map.add_argument('--db_file', type=str, help='DB filename to read the track information')
     # TODO single file name should be optional
     parser_create_map.add_argument('--gpx_file', type=str, help='A single GPX file to be included on a map')
     parser_create_map.add_argument('--start_date', type=str, help='Start date (included) from which activities are added to map')
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     # Check which command was provided
     if args.command == 'create_db':
         print("Running create-db with params: {}".format(args))
-        db_name = args.db_filename
+        db_name = args.db_file
         path_to_tracks = args.path_to_files
         # open and create db
         dbh = DBHandling(db_name)
@@ -142,7 +142,7 @@ if __name__ == '__main__':
 
     elif args.command == 'create_map':
         print("Running create-map with params: {}".format(args))
-        db_name = args.db_filename
+        db_name = args.db_file
         single_file = args.gpx_file
         start_date = args.start_date
         end_date = args.end_date
