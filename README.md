@@ -63,6 +63,25 @@ To create a web page of your activity, run the script with `create_map`.
 
 The generated html can be viewed with any web browser. 
 
+Help for knowing what parameters are required/available you can do
+
+```python
+ ✗ python track-map.py create_map --help
+usage: track-map.py create_map [-h] [--db_file DB_FILE] [--gpx_file GPX_FILE] [--start_date START_DATE] [--end_date END_DATE] [--html_output HTML_OUTPUT]
+                               [--activity ACTIVITY]
+
+options:
+  -h, --help            show this help message and exit
+  --db_file DB_FILE     DB filename to read the track information
+  --gpx_file GPX_FILE   A single GPX file to be included on a map
+  --start_date START_DATE
+                        Start date (included) from which activities are added to map
+  --end_date END_DATE   End date (included) to which activities are added to map
+  --html_output HTML_OUTPUT
+                        Generated html file name
+  --activity ACTIVITY   Which activity is picked from the date range. If nothing provided, then first's track's activity is used
+```
+
 ### To Do or Wishlist ###
 
 I have several ideas on how to improve this. I want to make it easier to include the created maps to a Sphinx 
